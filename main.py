@@ -1,13 +1,20 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
+import os
 import uuid
 import shutil
-import os
 
 from ocr_pipeline import run_ocr_pipeline
 
 app = FastAPI()
 
+# ✅ テスト用ルートエンドポイント
+@app.get("/")
+def read_root():
+    return {"message": "Hello, World!"}
+
+
+# ✅ 画像アップロード & OCR 実行
 @app.post("/ocr")
 async def ocr(file: UploadFile = File(...)):
     os.makedirs("input", exist_ok=True)
