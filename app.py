@@ -1,14 +1,15 @@
 from flask import Flask
-from dotenv import load_dotenv
 import os
+
+# 開発環境なら dotenv を読み込む
+if os.getenv("FLASK_ENV") != "production":
+    from dotenv import load_dotenv
+    load_dotenv()
 
 app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-  
-    load_dotenv()  # .env を読み込む
-
     api_key = os.getenv("test_key")
     debug_mode = os.getenv("DEBUG") == "True"
-    return api_key
+    return f"API_KEY: {api_key}, DEBUG: {debug_mode}"
