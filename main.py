@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.responses import FileResponse
 from typing import List
 import os
@@ -6,15 +6,16 @@ import uuid
 import shutil
 
 from ocr_pipeline import run_batch_pipeline
+from spreadsheet_logger import add_row  # ← あなたの元コードのロガー関数
 
 app = FastAPI()
 
-@app.get("/")
-def hello():
-    return {"message": "Hello, World!"}
-
 @app.post("/ocr/batch")
-async def ocr_batch(files: List[UploadFile] = File(...)):
+async def ocr_batch(
+    files: List[UploadFile] = File(...),
+    username: str = Form(...),
+    book_title: str = Form(...)
+):
     input_dir = "input"
     os.makedirs(input_dir, exist_ok=True)
 
@@ -26,5 +27,10 @@ async def ocr_batch(files: List[UploadFile] = File(...)):
             shutil.copyfileobj(file.file, buffer)
         uploaded_paths.append(filename)
 
-    result_path = run_batch_pipeline()  # 一括処理関数を呼ぶ
+    # OCR実行
+    result_path = run_batch_pipeline()
+
+    # ログをGoogleスプレッドシートに追加
+    add_row(username, len(files))
+
     return FileResponse(result_path, filename=os.path.basename(result_path))
