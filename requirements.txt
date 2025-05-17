@@ -1,3 +1,5 @@
-Flask
-Gunicorn
-dotenv
+fastapi
+uvicorn
+google-cloud-documentai
+google-auth
+python-multipart
