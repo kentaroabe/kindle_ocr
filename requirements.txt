@@ -1,5 +1,8 @@
 fastapi
 uvicorn
+requests
 google-cloud-documentai
 google-auth
 python-multipart
+gspread
+oauth2client
