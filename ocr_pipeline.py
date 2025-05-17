@@ -81,3 +81,43 @@ def run_ocr_pipeline(input_filename: str) -> str:
     os.remove(txt_path)
 
     return str(combined_path)
+
+def run_batch_pipeline():
+    # input/ → 作成日時で並び替え → リネーム
+    folder_path = Path("input")
+    output_folder = Path("output")
+    folder_path.mkdir(exist_ok=True)
+    output_folder.mkdir(exist_ok=True)
+
+    username = "安部健太郎"
+    files = sorted(folder_path.glob("*.*"), key=lambda f: f.stat().st_ctime_ns)
+
+    start_number = 1001
+    for idx, file in enumerate(files, start=start_number):
+        ext = file.suffix
+        new_filename = f"{idx}-{username}{ext}"
+        file.rename(folder_path / new_filename)
+
+    # OCRして txt 出力
+    for file in folder_path.glob("*.*"):
+        text = call_ocr_google(str(file))
+        txt_path = output_folder / (file.stem + ".txt")
+        with open(txt_path, "w", encoding="utf-8") as f:
+            f.write(text.replace("\n", ""))
+
+    # テキストファイルを結合
+    txt_files = sorted(output_folder.glob("*.txt"))
+    combined_filename = f"{uuid.uuid4().hex}_全文文字起こし.txt"
+    combined_path = output_folder / combined_filename
+    with open(combined_path, "w", encoding="utf-8") as f:
+        for txt_file in txt_files:
+            f.write(txt_file.read_text(encoding="utf-8"))
+
+    # クリーンアップ
+    for f in folder_path.glob("*"):
+        f.unlink()
+    for f in txt_files:
+        f.unlink()
+
+    return str(combined_path)
+
