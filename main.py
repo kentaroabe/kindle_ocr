@@ -1,14 +1,18 @@
 from fastapi import FastAPI, UploadFile, File, Form
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from typing import List
 import os
 import uuid
 import shutil
 
 from ocr_pipeline import run_batch_pipeline
-from spreadsheet_logger import add_row  # ← あなたの元コードのロガー関数
+from spreadsheet_logger import add_row, is_user_allowed
 
 app = FastAPI()
+
+@app.get("/")
+def hello():
+    return {"message": "Hello, World!"}
 
 @app.post("/ocr/batch")
 async def ocr_batch(
@@ -16,6 +20,13 @@ async def ocr_batch(
     username: str = Form(...),
     book_title: str = Form(...)
 ):
+    # 利用可否チェック
+    if not is_user_allowed(username):
+        return JSONResponse(status_code=403, content={
+            "message": f"{username} は利用上限に達しています。処理を中止しました。"
+        })
+
+    # inputディレクトリにファイルを保存
     input_dir = "input"
     os.makedirs(input_dir, exist_ok=True)
 
@@ -30,7 +41,8 @@ async def ocr_batch(
     # OCR実行
     result_path = run_batch_pipeline()
 
-    # ログをGoogleスプレッドシートに追加
+    # スプレッドシートに処理件数を記録
     add_row(username, len(files))
 
+    # 処理結果ファイルを返す
     return FileResponse(result_path, filename=os.path.basename(result_path))

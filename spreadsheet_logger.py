@@ -23,3 +23,18 @@ def add_row(username, number):
     japanese_datetime = now.strftime('%Y年%m月%d日 %H時%M分%S秒')
     worksheet.append_row([japanese_datetime, username, number])
     print(f"📝 スプレッドシートにログを追加: {username}, {number}")
+
+def is_user_allowed(username: str) -> bool:
+    try:
+        sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1rFTCzuytTLeNXT45kLQIYKgsrcsGwDz-xgXn4xgA8XU/edit")
+        ws = sheet.worksheet("利用可否")
+
+        records = ws.get_all_records()
+        for row in records:
+            if row["名前"] == username:
+                return str(row["可否"]).strip().upper() == "TRUE"
+
+        return False  # 名前が見つからない場合は許可しない
+    except Exception as e:
+        print(f"スプレッドシートアクセス失敗: {e}")
+        return False  # 安全側で拒否
