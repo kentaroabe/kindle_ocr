@@ -66,7 +66,6 @@ def run_batch_pipeline(input_dir, username, book_title):
     with open(combined_path, "w", encoding="utf-8") as f:
         for txt_file in txt_files:
             f.write(txt_file.read_text(encoding="utf-8"))
-            f.write("\n--- page break ---\n")
 
     # 中間ファイルを消す
     for f in input_folder.glob("*"):
