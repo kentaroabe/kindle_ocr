@@ -31,5 +31,18 @@ def add_row(username, number):
         print(f"スプレッドシートログ追加失敗: {e}")
 
 def is_user_allowed(username):
-    # シンプルな実装例（ここを実際のロジックに）
-    return True  # 必要なら過去の利用数をチェック
+    try:
+        worksheet = get_worksheet()  # 1番目のシートを取得
+        records = worksheet.get_all_records()
+        for row in records:
+            if row['名前'] == username:
+                if str(row['可否']).strip().upper() == "TRUE":
+                    return True
+                else:
+                    return False
+        # ユーザーが見つからなかった場合は利用不可
+        return False
+    except Exception as e:
+        print(f"利用可否判定エラー: {e}")
+        # エラー時は安全のため利用不可に
+        return False
