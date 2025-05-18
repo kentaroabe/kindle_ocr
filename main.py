@@ -4,17 +4,16 @@ from typing import List
 import os
 import uuid
 import shutil
+from datetime import datetime
 
 from ocr_pipeline import run_batch_pipeline
 from spreadsheet_logger import add_row, is_user_allowed
 
 app = FastAPI()
 
-
 @app.get("/")
 def hello():
     return {"message": "Hello, World!"}
-
 
 @app.post("/ocr/batch")
 async def ocr_batch(
@@ -35,13 +34,14 @@ async def ocr_batch(
 
     uploaded_paths = []
     for file in files:
-        filename = f"{uuid.uuid4()}{os.path.splitext(file.filename)[1]}"
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S%f") # マイクロ秒単位
+        filename = f"{timestamp}_{uuid.uuid4()}{os.path.splitext(file.filename)[1]}"
         path = os.path.join(input_dir, filename)
         with open(path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         uploaded_paths.append(path)
 
-    # OCR実行（サブディレクトリごと渡す）
+    # OCR実行
     try:
         result_path = run_batch_pipeline(input_dir, username, book_title)
     except Exception as e:

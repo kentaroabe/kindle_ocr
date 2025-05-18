@@ -45,8 +45,8 @@ def run_batch_pipeline(input_dir, username, book_title):
     output_folder = output_base / session_id
     output_folder.mkdir(parents=True, exist_ok=True)
 
-    # ファイル名を整理してリネーム
-    files = sorted(input_folder.glob("*.*"), key=lambda f: f.stat().st_ctime_ns)
+    # ★ ファイル名昇順（タイムスタンプ付与で確実にアップロード順＝作成日順）
+    files = sorted(input_folder.glob("*.*"), key=lambda f: f.name)
     for idx, file in enumerate(files, start=1):
         ext = file.suffix
         new_filename = f"{idx:04d}{ext}"
@@ -73,6 +73,5 @@ def run_batch_pipeline(input_dir, username, book_title):
     for f in txt_files:
         f.unlink()
     input_folder.rmdir()  # 空であれば削除
-    # outputサブディレクトリはFileResponse後に親側で削除推奨
 
     return str(combined_path)
