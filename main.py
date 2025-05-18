@@ -10,9 +10,11 @@ from spreadsheet_logger import add_row, is_user_allowed
 
 app = FastAPI()
 
+
 @app.get("/")
 def hello():
     return {"message": "Hello, World!"}
+
 
 @app.post("/ocr/batch")
 async def ocr_batch(
@@ -26,8 +28,9 @@ async def ocr_batch(
             "message": f"{username} は利用上限に達しています。処理を中止しました。"
         })
 
-    # inputディレクトリにファイルを保存
-    input_dir = "input"
+    # サブディレクトリでユーザーごとに分離
+    session_id = str(uuid.uuid4())
+    input_dir = os.path.join("input", session_id)
     os.makedirs(input_dir, exist_ok=True)
 
     uploaded_paths = []
@@ -36,13 +39,20 @@ async def ocr_batch(
         path = os.path.join(input_dir, filename)
         with open(path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        uploaded_paths.append(filename)
+        uploaded_paths.append(path)
 
-    # OCR実行
-    result_path = run_batch_pipeline()
+    # OCR実行（サブディレクトリごと渡す）
+    try:
+        result_path = run_batch_pipeline(input_dir, username, book_title)
+    except Exception as e:
+        shutil.rmtree(input_dir, ignore_errors=True)
+        return JSONResponse(status_code=500, content={"message": f"OCRエラー: {str(e)}"})
 
     # スプレッドシートに処理件数を記録
     add_row(username, len(files))
+
+    # inputサブディレクトリを消す
+    shutil.rmtree(input_dir, ignore_errors=True)
 
     # 処理結果ファイルを返す
     return FileResponse(result_path, filename=os.path.basename(result_path))
